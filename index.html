@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Digital Clock</title>
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+}
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #00ff00;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* =====================================================
+   MAIN SCREEN
+===================================================== */
+.screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* =====================================================
+   BATTERY PERCENT
+===================================================== */
+.battery-percent {
+    position: absolute;
+    top: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #00ff00;
+    font-size: clamp(22px, 3.5vw, 34px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+/* =====================================================
+   TOP BATTERY BAR
+===================================================== */
+.rainbow-bar {
+    position: absolute;
+    top: 16vh;
+    width: min(75vw, 600px);
+    height: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #080808;
+    box-shadow: 0 0 5px rgba(255,255,255,0.15);
+}
+.rainbow-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: 10px;
+    background: #ff0000;
+    transition: width 0.5s ease, background 0.5s ease;
+}
+/* =====================================================
+   CLOCK
+===================================================== */
+.clock-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.main-time {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    font-family: "Courier New", Courier, monospace;
+    font-size: clamp(80px, 17vw, 190px);
+    font-weight: 700;
+    line-height: 1;
+    color: #00ff00;
+    text-shadow: 0 0 8px rgba(0,255,0,0.55), 0 0 18px rgba(0,255,0,0.25);
+}
+.time-part {
+    display: inline-block;
+    width: 1.25em;
+    text-align: center;
+}
+.main-colon {
+    display: inline-block;
+    width: 0.55em;
+    text-align: center;
+    transition: opacity 0.08s linear;
+}
+/* =====================================================
+   SECONDS
+===================================================== */
+.seconds-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.45em;
+    height: 1.1em;
+    margin-left: 0.02em;
+    flex-shrink: 0;
+}
+.seconds-display {
+    display: inline-block;
+    min-width: 1.25em;
+    text-align: center;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.72em;
+    font-weight: 700;
+    color: #00ff00;
+    text-shadow: 0 0 8px rgba(0,255,0,0.55), 0 0 18px rgba(0,255,0,0.25);
+}
+.main-time.seconds-off .seconds-zone {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0;
+    pointer-events: auto;
+}
+.seconds-hidden {
+    visibility: hidden;
+}
+/* =====================================================
+   DATE
+===================================================== */
+.date-display {
+    position: absolute;
+    bottom: 16vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #00ff00;
+    font-family: "Courier New", Courier, monospace;
+    font-size: clamp(24px, 3.2vw, 30px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    cursor: pointer;
+    text-shadow: 0 0 7px rgba(0,255,0,0.35);
+}
+.screen-status {
+    min-height: 20px;
+    margin-top: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(12px, 1.9vw, 18px);
+    letter-spacing: 1px;
+    opacity: 0.55;
+}
+/* =====================================================
+   BATTERY CIRCLE
+===================================================== */
+.battery-circle {
+    position: absolute;
+    bottom: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(45px, 9vw, 75px);
+    height: clamp(45px, 9vw, 75px);
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        #ff0000 0deg, #ff0000 51.4286deg,
+        #ff8000 51.4286deg, #ff8000 102.8572deg,
+        #ffff00 102.8572deg, #ffff00 154.2858deg,
+        #00ff00 154.2858deg, #00ff00 205.7143deg,
+        #00ffff 205.7143deg, #00ffff 257.1429deg,
+        #0080ff 257.1429deg, #0080ff 308.5715deg,
+        #8000ff 308.5715deg, #8000ff 360deg
+    );
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+.battery-circle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        transparent var(--battery-angle),
+        #080808 var(--battery-angle),
+        #080808 360deg
+    );
+    z-index: 1;
+}
+.battery-circle-inner {
+    position: relative;
+    z-index: 2;
+    width: 72%;
+    height: 72%;
+    border-radius: 50%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #00ff00;
+    font-size: clamp(14px, 3.7vw, 19px);
+    font-weight: 900;
+}
+/* =====================================================
+   BATTERY TRIANGLES
+===================================================== */
+.battery-triangle {
+    position: absolute;
+    bottom: 5.2vh;
+    width: 0;
+    height: 0;
+    transition: border-color 0.25s ease, filter 0.25s ease;
+}
+.triangle-left {
+    right: calc(50% + 55px);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 18px solid transparent;
+}
+.triangle-right {
+    left: calc(50% + 55px);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 15px solid transparent;
+}
+.battery-discharging .triangle-left {
+    border-top-color: #ff0000;
+    filter: drop-shadow(0 0 5px rgba(255,0,0,0.65));
+}
+.battery-charging .triangle-right {
+    border-bottom-color: #00ff00;
+    filter: drop-shadow(0 0 5px rgba(0,255,0,0.65));
+}
+/* =====================================================
+   MESSAGE
+===================================================== */
+.fullscreen-hint {
+    position: fixed;
+    left: 50%;
+    bottom: 55vh;
+    transform: translateX(-50%) translateY(200px);
+    padding: 14px 16px;
+    border: 1px solid rgba(0,255,0,0.4);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.82);
+    color: #00ff00;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(16px, 2vw, 19px);
+    letter-spacing: 1px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+    white-space: nowrap;
+}
+.fullscreen-hint.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+@media (max-width: 500px) {
+    .battery-percent { top: 2vh; }
+    .rainbow-bar {
+        top: 10vh;
+        width: 78vw;
+    }
+    .date-display { bottom: 9vh; }
+    .battery-circle { bottom: 2vh; }
+    .battery-triangle { bottom: 3.5vh; }
+    .triangle-left { right: calc(50% + 43px); }
+    .triangle-right { left: calc(50% + 43px); }
+}
+</style>
+</head>
+<body>
+<div class="screen" id="screen">
+
+    <!-- BATTERY PERCENT -->
+    <div class="battery-percent" id="batteryPercent">--%</div>
+
+    <!-- TOP BATTERY BAR -->
+    <div class="rainbow-bar">
+        <div class="rainbow-fill" id="rainbowFill"></div>
+    </div>
+
+    <!-- CLOCK -->
+    <div class="clock-container" id="clockContainer">
+        <div class="main-time" id="mainTime">
+            <span class="time-part" id="hours">00</span>
+            <span class="main-colon" id="mainColon">:</span>
+            <span class="time-part" id="minutes">00</span>
+            <!-- Permanent touch zone -->
+            <div class="seconds-zone" id="secondsZone">
+                <span class="seconds-display" id="seconds">00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATE -->
+    <div class="date-display" id="dateDisplay">
+        <span id="dateText">00 00 0000</span>
+        <span class="screen-status" id="screenStatus"></span>
+    </div>
+
+    <!-- BATTERY TRIANGLES -->
+    <div class="battery-triangle triangle-left" id="triangleLeft"></div>
+    <div class="battery-triangle triangle-right" id="triangleRight"></div>
+
+    <!-- BATTERY CIRCLE -->
+    <div class="battery-circle" id="batteryCircleWrapper">
+        <div class="battery-circle-inner" id="batteryCircle">--</div>
+    </div>
+
+    <!-- MESSAGE -->
+    <div class="fullscreen-hint" id="fullscreenHint"></div>
+
+</div>
+<script>
+/* =========================================================
+   ELEMENTS
+========================================================= */
+const mainTime = document.getElementById('mainTime');
+const hours = document.getElementById('hours');
+const minutes = document.getElementById('minutes');
+const seconds = document.getElementById('seconds');
+const mainColon = document.getElementById('mainColon');
+const secondsZone = document.getElementById('secondsZone');
+const dateDisplay = document.getElementById('dateDisplay');
+const dateText = document.getElementById('dateText');
+const screenStatus = document.getElementById('screenStatus');
+const batteryPercent = document.getElementById('batteryPercent');
+const batteryCircle = document.getElementById('batteryCircle');
+const batteryCircleWrapper = document.getElementById('batteryCircleWrapper');
+const rainbowFill = document.getElementById('rainbowFill');
+const fullscreenHint = document.getElementById('fullscreenHint');
+const screen = document.getElementById('screen');
+
+/* =========================================================
+   SECONDS
+========================================================= */
+let SHOW_SECONDS = true;
+
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+
+    hours.textContent = h;
+    minutes.textContent = m;
+    seconds.textContent = s;
+
+    if (SHOW_SECONDS) {
+        mainTime.classList.remove('seconds-off');
+        seconds.classList.remove('seconds-hidden');
+        mainColon.style.opacity = '1';
+    } else {
+        mainTime.classList.add('seconds-off');
+        seconds.classList.add('seconds-hidden');
+        mainColon.style.opacity =
+            now.getSeconds() % 2 === 0 ? '1' : '0';
+    }
+
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    dateText.textContent = `${day} ${month} ${year}`;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+
+/* =========================================================
+   TOGGLE SECONDS
+========================================================= */
+function toggleSeconds() {
+    SHOW_SECONDS = !SHOW_SECONDS;
+    updateClock();
+    showMessage(SHOW_SECONDS ? 'SECONDS ON' : 'SECONDS OFF');
+}
+
+/* =========================================================
+   DOUBLE TAP — SECONDS
+========================================================= */
+let secondsLastTap = 0;
+const SECONDS_DOUBLE_TAP = 420;
+
+secondsZone.addEventListener('pointerup', function(event) {
+    event.stopPropagation();
+    const now = Date.now();
+
+    if (now - secondsLastTap < SECONDS_DOUBLE_TAP) {
+        secondsLastTap = 0;
+        toggleSeconds();
+    } else {
+        secondsLastTap = now;
+    }
+});
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+let messageTimer = null;
+
+function showMessage(message) {
+    fullscreenHint.textContent = message;
+    fullscreenHint.classList.add('show');
+    clearTimeout(messageTimer);
+
+    messageTimer = setTimeout(function() {
+        fullscreenHint.classList.remove('show');
+    }, 1500);
+}
+
+/* =========================================================
+   TRIPLE TAP — FULLSCREEN
+========================================================= */
+let screenTapCount = 0;
+let screenTapTimer = null;
+const TRIPLE_TAP_DELAY = 500;
+
+document.addEventListener('pointerup', async function(event) {
+    if (secondsZone.contains(event.target)) return;
+    if (dateDisplay.contains(event.target)) return;
+    if (event.pointerType === 'mouse') return;
+
+    screenTapCount++;
+    clearTimeout(screenTapTimer);
+
+    screenTapTimer = setTimeout(async function() {
+        if (screenTapCount === 3) {
+            if (document.fullscreenElement) {
+                await exitFullscreen();
+                showMessage('FULLSCREEN OFF');
+            } else {
+                await enterFullscreen();
+            }
+        }
+        screenTapCount = 0;
+    }, TRIPLE_TAP_DELAY);
+});
+
+async function enterFullscreen() {
+    try {
+        if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+            showMessage('FULLSCREEN ON');
+        }
+    } catch (error) {
+        console.log('Fullscreen error:', error);
+    }
+}
+
+async function exitFullscreen() {
+    try {
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+        }
+    } catch (error) {
+        console.log('Exit fullscreen error:', error);
+    }
+}
+
+/* =========================================================
+   WAKE LOCK
+========================================================= */
+let wakeLock = null;
+let KEEP_SCREEN_ON = true;
+
+async function requestWakeLock() {
+    if (!KEEP_SCREEN_ON) return;
+    if (!('wakeLock' in navigator)) return;
+
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', function() {
+            wakeLock = null;
+        });
+    } catch (error) {
+        console.log('Wake Lock error:', error);
+    }
+}
+
+async function releaseWakeLock() {
+    try {
+        if (wakeLock) {
+            await wakeLock.release();
+            wakeLock = null;
+        }
+    } catch (error) {
+        console.log('Wake Lock release error:', error);
+    }
+}
+
+/* =========================================================
+   LONG PRESS DATE
+========================================================= */
+let longPressTimer = null;
+const LONG_PRESS_TIME = 2500;
+
+dateDisplay.addEventListener('pointerdown', function(event) {
+    event.stopPropagation();
+    clearTimeout(longPressTimer);
+
+    longPressTimer = setTimeout(async function() {
+        KEEP_SCREEN_ON = !KEEP_SCREEN_ON;
+
+        if (KEEP_SCREEN_ON) {
+            await requestWakeLock();
+            screenStatus.textContent = '';
+            showMessage('SCREEN LOCK ON');
+        } else {
+            await releaseWakeLock();
+            screenStatus.textContent = 'SCREEN AUTO';
+            showMessage('SCREEN LOCK OFF');
+        }
+    }, LONG_PRESS_TIME);
+});
+
+function cancelLongPress() {
+    clearTimeout(longPressTimer);
+}
+
+dateDisplay.addEventListener('pointerup', function(event) {
+    event.stopPropagation();
+    cancelLongPress();
+});
+
+dateDisplay.addEventListener('pointercancel', function(event) {
+    event.stopPropagation();
+    cancelLongPress();
+});
+
+/* =========================================================
+   KEEP SCREEN ON
+========================================================= */
+requestWakeLock();
+
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+        if (KEEP_SCREEN_ON) requestWakeLock();
+    }
+});
+
+window.addEventListener('focus', function() {
+    if (KEEP_SCREEN_ON) requestWakeLock();
+});
+
+/* =========================================================
+   BATTERY — TOP BAR COLOR
+========================================================= */
+function getBatterySpectrumGradient(level) {
+    const colors = [
+        { pos: 0, color: '#ff0000' },
+        { pos: 14.2857, color: '#ff8000' },
+        { pos: 28.5714, color: '#ffff00' },
+        { pos: 42.8571, color: '#00ff00' },
+        { pos: 57.1428, color: '#00ffff' },
+        { pos: 71.4285, color: '#0080ff' },
+        { pos: 85.7142, color: '#8000ff' },
+        { pos: 100, color: '#8000ff' }
+    ];
+
+    if (level <= 0) return '#ff0000';
+
+    const stops = [];
+
+    for (let i = 0; i < colors.length; i++) {
+        const current = colors[i];
+
+        if (current.pos < level) {
+            const relativePosition = (current.pos / level) * 100;
+            stops.push(`${current.color} ${relativePosition}%`);
+            continue;
+        }
+
+        if (current.pos === level) {
+            stops.push(`${current.color} 100%`);
+            break;
+        }
+
+        const previous = colors[i - 1];
+        const range = current.pos - previous.pos;
+        const progress = (level - previous.pos) / range;
+        const color = interpolateColor(
+            previous.color,
+            current.color,
+            progress
+        );
+
+        stops.push(`${color} 100%`);
+        break;
+    }
+
+    return `linear-gradient(90deg, ${stops.join(', ')})`;
+}
+
+/* =========================================================
+   COLOR INTERPOLATION
+========================================================= */
+function interpolateColor(color1, color2, amount) {
+    const hexToRgb = function(hex) {
+        hex = hex.replace('#', '');
+        return {
+            r: parseInt(hex.substring(0, 2), 16),
+            g: parseInt(hex.substring(2, 4), 16),
+            b: parseInt(hex.substring(4, 6), 16)
+        };
+    };
+
+    const rgbToHex = function(r, g, b) {
+        return '#' + [r, g, b]
+            .map(function(value) {
+                return Math.round(value)
+                    .toString(16)
+                    .padStart(2, '0');
+            })
+            .join('');
+    };
+
+    const c1 = hexToRgb(color1);
+    const c2 = hexToRgb(color2);
+    const r = c1.r + (c2.r - c1.r) * amount;
+    const g = c1.g + (c2.g - c1.g) * amount;
+    const b = c1.b + (c2.b - c1.b) * amount;
+
+    return rgbToHex(r, g, b);
+}
+
+/* =========================================================
+   UPDATE BATTERY INDICATORS
+========================================================= */
+function updateBatteryIndicators(level, isCharging) {
+    level = Math.max(0, Math.min(100, level));
+
+    rainbowFill.style.width = `${level}%`;
+    rainbowFill.style.background =
+        getBatterySpectrumGradient(level);
+
+    const angle = level * 3.6;
+    batteryCircleWrapper.style.setProperty(
+        '--battery-angle',
+        `${angle}deg`
+    );
+
+    batteryPercent.textContent = `${level}%`;
+    batteryCircle.textContent = `${level}%`;
+
+    screen.classList.toggle('battery-charging', isCharging);
+    screen.classList.toggle('battery-discharging', !isCharging);
+}
+
+/* =========================================================
+   BATTERY API
+========================================================= */
+async function initBattery() {
+    if (!('getBattery' in navigator)) {
+        batteryPercent.textContent = '--%';
+        batteryCircle.textContent = '--';
+        rainbowFill.style.width = '0%';
+        rainbowFill.style.background = '#ff0000';
+        screen.classList.remove(
+            'battery-charging',
+            'battery-discharging'
+        );
+        return;
+    }
+
+    try {
+        const battery = await navigator.getBattery();
+
+        function updateBattery() {
+            const level = Math.round(battery.level * 100);
+            updateBatteryIndicators(level, battery.charging);
+        }
+
+        updateBattery();
+
+        battery.addEventListener(
+            'levelchange',
+            updateBattery
+        );
+
+        battery.addEventListener(
+            'chargingchange',
+            updateBattery
+        );
+
+    } catch (error) {
+        console.log('Battery API error:', error);
+    }
+}
+
+initBattery();
+
+/* =========================================================
+   PREVENT CONTEXT MENU
+========================================================= */
+document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
+});
+
+/* =========================================================
+   PREVENT DOUBLE-TAP ZOOM
+========================================================= */
+let lastTouchEnd = 0;
+
+document.addEventListener('touchend', function(event) {
+    const now = Date.now();
+
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+    }
+
+    lastTouchEnd = now;
+}, { passive: false });
+
+</script>
+</body>
+</html>
